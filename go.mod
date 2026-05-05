@@ -2,6 +2,8 @@ module github.com/mikelear/tempo-to-har
 
 go 1.24.0
 
+toolchain go1.25.9
+
 require (
 	github.com/gin-gonic/gin v1.10.0
 	github.com/jackc/pgx/v5 v5.7.1

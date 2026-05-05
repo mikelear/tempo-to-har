@@ -34,9 +34,9 @@ type otlpExportTrace struct {
 }
 
 type resourceSpans struct {
-	Resource         resourceObj         `json:"resource"`
-	InstrumentationLibrarySpans []ilSpans `json:"instrumentationLibrarySpans"`
-	ScopeSpans       []ilSpans            `json:"scopeSpans"` // newer OTLP variant
+	Resource                    resourceObj `json:"resource"`
+	InstrumentationLibrarySpans []ilSpans   `json:"instrumentationLibrarySpans"`
+	ScopeSpans                  []ilSpans   `json:"scopeSpans"` // newer OTLP variant
 }
 
 type resourceObj struct {
@@ -87,6 +87,7 @@ type HAR struct {
 	Log HARLog `json:"log"`
 }
 
+// HARLog is the page-level container in a HAR 1.2 envelope.
 type HARLog struct {
 	Version string     `json:"version"`
 	Creator HARCreator `json:"creator"`
@@ -94,12 +95,14 @@ type HARLog struct {
 	Comment string     `json:"comment,omitempty"`
 }
 
+// HARCreator identifies the tool that produced the HAR (per HAR 1.2 spec).
 type HARCreator struct {
 	Name    string `json:"name"`
 	Version string `json:"version"`
 	Comment string `json:"comment,omitempty"`
 }
 
+// HAREntry is one request/response pair in the HAR log.
 type HAREntry struct {
 	StartedDateTime string      `json:"startedDateTime"`
 	Time            float64     `json:"time"` // ms
@@ -110,17 +113,19 @@ type HAREntry struct {
 	Comment         string      `json:"comment,omitempty"`
 }
 
+// HARRequest is the request portion of a HAR entry.
 type HARRequest struct {
-	Method      string             `json:"method"`
-	URL         string             `json:"url"`
-	HTTPVersion string             `json:"httpVersion"`
-	Headers     []HARHeader        `json:"headers"`
-	QueryString []HARQueryParam    `json:"queryString"`
-	Cookies     []HARCookie        `json:"cookies"`
-	HeadersSize int                `json:"headersSize"`
-	BodySize    int                `json:"bodySize"`
+	Method      string          `json:"method"`
+	URL         string          `json:"url"`
+	HTTPVersion string          `json:"httpVersion"`
+	Headers     []HARHeader     `json:"headers"`
+	QueryString []HARQueryParam `json:"queryString"`
+	Cookies     []HARCookie     `json:"cookies"`
+	HeadersSize int             `json:"headersSize"`
+	BodySize    int             `json:"bodySize"`
 }
 
+// HARResponse is the response portion of a HAR entry.
 type HARResponse struct {
 	Status      int         `json:"status"`
 	StatusText  string      `json:"statusText"`
@@ -133,37 +138,43 @@ type HARResponse struct {
 	BodySize    int         `json:"bodySize"`
 }
 
+// HARHeader is a single name/value HTTP header.
 type HARHeader struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
+// HARQueryParam is a single name/value URL query parameter.
 type HARQueryParam struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
+// HARCookie is a single name/value cookie.
 type HARCookie struct {
 	Name  string `json:"name"`
 	Value string `json:"value"`
 }
 
+// HARContent describes the body of a HAR response.
 type HARContent struct {
 	Size     int    `json:"size"`
 	MimeType string `json:"mimeType"`
 }
 
+// HARCache is a placeholder per HAR 1.2 — not used here.
 type HARCache struct{}
 
+// HARTimings breaks down a HAR entry's request lifecycle.
 type HARTimings struct {
 	Send    float64 `json:"send"`
 	Wait    float64 `json:"wait"`
 	Receive float64 `json:"receive"`
 }
 
-// SynthFromTempo takes the raw OTLP JSON Tempo returned + metadata,
-// and returns an HAR with one entry per HTTP-flavored span.
-func SynthFromTempo(tempoBody []byte, serviceName, clusterTag, sourceTag string) (*HAR, error) {
+// FromTempo takes the raw OTLP JSON Tempo returned + metadata, and returns
+// a HAR with one entry per HTTP-flavored span.
+func FromTempo(tempoBody []byte, serviceName, clusterTag, sourceTag string) (*HAR, error) {
 	var trace otlpExportTrace
 	if err := json.Unmarshal(tempoBody, &trace); err != nil {
 		return nil, fmt.Errorf("decode OTLP: %w", err)

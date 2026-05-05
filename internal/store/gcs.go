@@ -17,6 +17,8 @@ import (
 // on PATH and authenticated.
 func Upload(bucket, path string, content []byte) error {
 	gsURL := fmt.Sprintf("gs://%s/%s", bucket, path)
+	// #nosec G204 — bucket+path come from operator-controlled env/config, not user input.
+	// Phase 1 hardening replaces this shellout with cloud.google.com/go/storage.
 	cmd := exec.Command("gsutil", "cp", "-", gsURL)
 	cmd.Stdin = bytes.NewReader(content)
 

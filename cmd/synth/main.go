@@ -4,7 +4,7 @@
 // set of services within a window (default: last hour), synthesizes one
 // HAR per trace, uploads each to GCS at:
 //
-//   gs://<bucket>/har/v1/tempo-synth/<service>/<traceID>.har
+//	gs://<bucket>/har/v1/tempo-synth/<service>/<traceID>.har
 //
 // Spike scope: hardcoded service list (leartech-qa-canary), single bucket,
 // fire-and-exit. Phase 1 hardening: ConfigMap-driven service list,
@@ -12,13 +12,13 @@
 //
 // Required env (CronJob supplies these via ConfigMap or --flag):
 //
-//   TEMPO_BASE_URL   default: http://tempo-query-frontend.jx-observability.svc.cluster.local:3200
-//   GCS_BUCKET       default: test-artifacts-product-first
-//   GCS_PREFIX       default: har/v1/tempo-synth
-//   SERVICE_NAME     required: which service to synthesize HAR for
-//   WINDOW_MINUTES   default: 60
-//   CLUSTER_TAG      default: unknown
-//   LIMIT            default: 50 (max traces per run)
+//	TEMPO_BASE_URL   default: http://tempo.jx-observability.svc.cluster.local:3200
+//	GCS_BUCKET       default: test-artifacts-product-first
+//	GCS_PREFIX       default: har/v1/tempo-synth
+//	SERVICE_NAME     required: which service to synthesize HAR for
+//	WINDOW_MINUTES   default: 60
+//	CLUSTER_TAG      default: unknown
+//	LIMIT            default: 50 (max traces per run)
 package main
 
 import (
@@ -37,8 +37,13 @@ import (
 )
 
 func main() {
+	code := run()
+	os.Exit(code)
+}
+
+func run() int {
 	var (
-		tempoURL    = flag.String("tempo-url", envOr("TEMPO_BASE_URL", "http://tempo-query-frontend.jx-observability.svc.cluster.local:3200"), "Tempo base URL")
+		tempoURL    = flag.String("tempo-url", envOr("TEMPO_BASE_URL", "http://tempo.jx-observability.svc.cluster.local:3200"), "Tempo base URL")
 		bucket      = flag.String("bucket", envOr("GCS_BUCKET", "test-artifacts-product-first"), "GCS bucket")
 		prefix      = flag.String("prefix", envOr("GCS_PREFIX", "har/v1/tempo-synth"), "GCS path prefix (no trailing slash)")
 		serviceName = flag.String("service", envOr("SERVICE_NAME", ""), "service.name to query Tempo for (required)")
@@ -51,7 +56,7 @@ func main() {
 
 	if *serviceName == "" {
 		fmt.Fprintln(os.Stderr, "FATAL: --service or SERVICE_NAME required")
-		os.Exit(2)
+		return 2
 	}
 
 	logf := func(level, format string, args ...any) {
@@ -71,13 +76,13 @@ func main() {
 	traces, err := c.Search(ctx, *serviceName, since, until, *limit)
 	if err != nil {
 		logf("fatal", "Tempo search: %v", err)
-		os.Exit(1)
+		return 1
 	}
 	logf("info", "search returned %d traces in window [%s, %s]", len(traces), since.Format(time.RFC3339), until.Format(time.RFC3339))
 
 	if len(traces) == 0 {
 		logf("info", "no traces — nothing to synthesize")
-		return
+		return 0
 	}
 
 	uploaded := 0
@@ -91,7 +96,7 @@ func main() {
 			continue
 		}
 
-		har, err := synth.SynthFromTempo(body, *serviceName, *clusterTag, "tempo")
+		har, err := synth.FromTempo(body, *serviceName, *clusterTag, "tempo")
 		if err != nil {
 			logf("warn", "synth trace %s: %v", t.TraceID, err)
 			failed++
@@ -131,8 +136,9 @@ func main() {
 	logf("info", "summary: uploaded=%d skipped=%d failed=%d total-traces=%d", uploaded, skipped, failed, len(traces))
 
 	if failed > 0 {
-		os.Exit(1)
+		return 1
 	}
+	return 0
 }
 
 func envOr(key, fallback string) string {

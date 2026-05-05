@@ -36,6 +36,12 @@ spec:
           value: {{ .Values.config.cluster | quote }}
         - name: LOG_LEVEL
           value: {{ .Values.config.logLevel | quote }}
+        - name: TEMPO_BASE_URL
+          value: {{ .Values.tempo.baseUrl | quote }}
+        - name: GCS_BUCKET
+          value: {{ .Values.synth.bucket | quote }}
+        - name: GCS_PREFIX
+          value: {{ .Values.synth.prefix | quote }}
         {{- if .Values.database.enabled }}
         - name: DATABASE_URL
           valueFrom:
