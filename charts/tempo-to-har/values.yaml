@@ -49,6 +49,18 @@ config:
   cluster: ""  # "gcp" | "az" — set from .Values.global or env-specific
   logLevel: info
 
+# Tempo upstream — both the (mostly-vestigial) HTTP server and the /synth
+# CronJob read TEMPO_BASE_URL when running in-cluster. Default resolves on
+# both GCP + AZ clusters (same service name in jx-observability).
+tempo:
+  baseUrl: http://tempo.jx-observability.svc.cluster.local:3200
+
+# GCS upload destination for synthesized HARs. Per cluster / per stage as
+# needed via configs overlay.
+synth:
+  bucket: test-artifacts-product-first
+  prefix: har/v1/tempo-synth
+
 # Postgres wiring — DB credentials come from ExternalSecret (ESO) referencing
 # the cluster's secret backend (GSM on GCP, AKV on Azure).
 database:

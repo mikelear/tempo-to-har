@@ -6,7 +6,7 @@
 //
 // Tempo API spec: https://grafana.com/docs/tempo/latest/api_docs/
 //
-// Spike scope: in-cluster Tempo at tempo-query-frontend.jx-observability:3200,
+// Spike scope: in-cluster Tempo at tempo.jx-observability:3200,
 // no auth required. Phase 1 hardening: cross-cluster auth, retry/backoff,
 // pagination for large result sets.
 package tempo
@@ -24,7 +24,7 @@ import (
 
 // Client wraps a Tempo HTTP endpoint.
 type Client struct {
-	BaseURL string       // e.g. http://tempo-query-frontend.jx-observability.svc.cluster.local:3200
+	BaseURL string // e.g. http://tempo.jx-observability.svc.cluster.local:3200
 	HTTP    *http.Client
 }
 
@@ -70,7 +70,7 @@ func (c *Client) Search(ctx context.Context, serviceName string, since, until ti
 	if err != nil {
 		return nil, fmt.Errorf("tempo search %s: %w", u, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
@@ -98,7 +98,7 @@ func (c *Client) Trace(ctx context.Context, traceID string) (json.RawMessage, er
 	if err != nil {
 		return nil, fmt.Errorf("tempo trace %s: %w", u, err)
 	}
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	if resp.StatusCode != http.StatusOK {
 		body, _ := io.ReadAll(resp.Body)
