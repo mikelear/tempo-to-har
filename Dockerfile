@@ -23,11 +23,20 @@ RUN CGO_ENABLED=0 GOOS=linux go build \
     -o /out/server \
     ./cmd/server
 
+# tempo-to-har's actual workload is the /synth CLI (CronJob-invoked).
+# Bootstrap gap #6 from Session 0c — ship both binaries.
+RUN CGO_ENABLED=0 GOOS=linux go build \
+    -trimpath \
+    -ldflags="-s -w -X main.version=${VERSION}" \
+    -o /out/synth \
+    ./cmd/synth
+
 # ---- runtime stage ----
 # distroless/static:nonroot — no shell, no package manager, uid 65532
 FROM gcr.io/distroless/static-debian12:nonroot
 
 COPY --from=build /out/server /server
+COPY --from=build /out/synth /synth
 # --chown=65532:65532 makes the generated OpenAPI spec readable under any
 # kernel/filesystem policy that double-checks ownership beyond the 0644
 # world-read bits (some nodes reject root-owned files in distroless/nonroot
