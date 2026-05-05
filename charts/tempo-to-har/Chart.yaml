@@ -2,12 +2,12 @@ apiVersion: v2
 name: tempo-to-har
 description: Golden Go service template — replace this description after cloning
 type: application
-version: 0.0.1
-appVersion: "0.0.1"
+version: 0.0.2
+appVersion: "0.0.2"
 home: https://github.com/mikelear/tempo-to-har
 maintainers:
-  - name: mikelear
-    email: mike.lear@mqube.com
+- name: mikelear
+  email: mike.lear@mqube.com
 
 # leartech-helm-library helpers (_labels.tpl, _names.tpl, _probes.tpl,
 # _resources.tpl, _security.tpl) are inlined in templates/ rather than
